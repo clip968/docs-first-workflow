@@ -1,61 +1,56 @@
-# Plan: <title>
+# Plan: Title
 
-## Related Contract
+## Status
 
-- Spec: `docs/specs/<spec-file>.md`
-- Requirement IDs: REQ-<PROJECT>-001, REQ-<PROJECT>-002
-- Acceptance criteria: AC-<PROJECT>-001, AC-<PROJECT>-002
-- ADRs, if any: `docs/adrs/<adr-file>.md`
+Proposed | In Progress | Completed YYYY-MM-DD
 
-## Scope
+## Related contract
 
-### In Scope
+- Spec: `docs/specs/...`
+- ADR: `docs/adrs/...`
+- Master plan: `docs/plans/...` (if this plan is part of a larger tracking plan)
 
--
+## Goal
 
-### Out of Scope
+The small goal this plan will complete. It should correspond to one feature unit
+from the spec.
 
--
+## Non-goals
 
-## Task List
+- What this plan will NOT do
 
-### TASK-001: <small feature/test slice>
+## Tasks
 
-- Related requirements:
-  - REQ-<PROJECT>-001
-- Files:
-  - `src/...`
-  - `tests/...`
-- Red test:
-  - Test name: `test_<name>`
-  - Expected initial failure: <error or assertion>
-- Implementation:
-  - Minimal change:
-- Verification:
-  - Command: `<test command>`
-- Done when:
-  - The red test fails before implementation.
-  - The test passes after implementation.
-  - Related docs are updated.
-  - Handoff is updated if this task completes the work.
+Each task is a checklist item. Mark `[x]` when completed.
 
-### TASK-002: <next slice>
+- [ ] task 1
+- [ ] task 2
+- [ ] task 3
 
-- Related requirements:
-- Files:
-- Red test:
-- Implementation:
-- Verification:
-- Done when:
+## Verification
 
-## Validation
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
 
-- Unit test command: `<test command>`
-- Docs freshness command: `python scripts/check_docs_freshness.py --all`
-- Finish command: `python scripts/finish_task.py`
+## Handoff Updates
 
-## Notes
+- What to reflect in `docs/handoff/CURRENT_HANDOFF.md`
 
-- Risks:
-- Follow-ups:
-- Reason if red test cannot be written first:
+---
+
+## Plan Writing Rules
+
+1. **Break spec into feature-sized units.** One plan = one feature (or one
+   implementation step) from the spec.
+2. **Number plan files for easy reference from the master plan.**
+   Example: `docs/plans/v03/2026-05-14-v03-03-drive-api-auth.md`
+3. **Tasks use checklists (`[ ]`/`[x]`).** A glance at the plan must show what
+   is done and what is not.
+4. **Feature plans live under `docs/plans/<phase>/`.**
+   Example: `docs/plans/v03/`, `docs/plans/v04/`
+5. **If one spec produces multiple plans, create a master plan.**
+   The master plan lives at `docs/plans/YYYY-MM-DD-<phase>-master.md` and tracks
+   each feature plan's completion status with checklists.
+6. **Status must be one of: Proposed / In Progress / Completed YYYY-MM-DD.**
+   Completed entries include the completion date.

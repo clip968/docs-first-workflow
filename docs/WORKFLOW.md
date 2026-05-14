@@ -1,27 +1,38 @@
 # Docs-First Agent Workflow
 
-The source of truth for this project is the repository-internal `docs/` directory. External tools (Notion, Confluence, wiki, etc.) are NOT the source of truth. They serve as mirror/index only — for handoff summaries, links, or indices.
+The source of truth for this project is the repository-internal `docs/` directory.
+External tools (Notion, Confluence, wiki, etc.) are NOT the source of truth.
+They serve as mirror/index only — for handoff summaries, links, or indices.
 
 ## Core Flow
 
 Every non-trivial code change follows this sequence:
 
 ```text
-1. Work start check
-2. Requirement confirmation
-3. Related spec review
-4. Write spec (if none exists)
-5. Write ADR (if technical decision is needed)
-6. Break spec into feature/test-sized tasks
-7. For each task: write a failing test
-8. Confirm failing test fails
-9. Minimal implementation
-10. Confirm test passes
-11. Update related docs/specs/runbooks
-12. Update docs/handoff/CURRENT_HANDOFF.md
-13. Run python scripts/finish_task.py
-14. Update external index/mirror (if applicable)
+spec
+-> ADR (if needed)
+-> plan
+-> failing tests
+-> implementation
+-> docs update
+-> handoff update
+-> python scripts/finish_task.py
+-> optional external mirror apply
 ```
+
+The finish flow is more precisely:
+
+```text
+implementation
+-> tests
+-> relevant docs/specs/runbooks update
+-> docs/handoff/CURRENT_HANDOFF.md update
+-> python scripts/finish_task.py
+-> optional external mirror apply
+```
+
+`finish_task.py` is NOT a mid-flight check before handoff update. It is the final
+validation gate of the entire working tree, including handoff.
 
 ## Work Start Check
 
@@ -45,7 +56,8 @@ Do not revert existing uncommitted changes. Do not touch files unrelated to the 
 
 ## Spec Contract
 
-Implementation is governed by spec contracts. If a relevant spec exists, read it first. If none exists, create a minimal spec in `docs/specs/` before implementation.
+Implementation is governed by spec contracts. If a relevant spec exists, read it first.
+If none exists, create a minimal spec in `docs/specs/` before implementation.
 
 A spec must clearly define:
 
@@ -55,7 +67,8 @@ A spec must clearly define:
 - Requirement IDs and acceptance criteria
 - Test mappings
 
-Small documentation-only changes may proceed without a new spec. Any behavior-changing code change must confirm or create a spec first.
+Small documentation-only changes may proceed without a new spec. Any behavior-changing
+code change must confirm or create a spec first.
 
 ## ADR Guidelines
 
@@ -66,7 +79,8 @@ Not every change needs an ADR. Create one in `docs/adrs/` when:
 - The change has long-term impact on testing, deployment, or operations
 - Multiple reasonable alternatives exist, and the reasoning should be recorded
 
-ADRs do not replace specs. ADRs record *why* a decision was made; specs record *what* the implementation must conform to.
+ADRs do not replace specs. ADRs record *why* a decision was made; specs record
+*what* the implementation must conform to.
 
 ## Plan Guidelines
 
@@ -75,12 +89,26 @@ Before non-trivial implementation, create a small execution plan in `docs/plans/
 A plan includes:
 
 - Related contract (spec, ADR, runbook references)
-- Scope and out-of-scope
-- Files to change
-- For each task: red test name, implementation approach, verification method
-- Done-when conditions
+- Goal (one feature unit from the spec)
+- Non-goals
+- Task checklist (`[ ]` / `[x]`)
+- Verification commands
+- Handoff notes
 
-Plans are ephemeral execution guides. They are NOT long-term contracts, NOT source of truth, and do NOT satisfy DOC_OWNERS freshness requirements.
+Plans are ephemeral execution guides. They are NOT long-term contracts, NOT source
+of truth, and do NOT satisfy DOC_OWNERS freshness requirements.
+
+Plans that track a spec's multiple features should be organized under a version
+folder:
+
+```text
+docs/plans/<version>/
+  2026-05-14-<version>-01-<feature>.md
+  2026-05-14-<version>-02-<next-feature>.md
+```
+
+With a master tracking plan at `docs/plans/YYYY-MM-DD-<phase>-master.md`.
+The master plan tracks the completion status of each feature plan via checklists.
 
 ## TDD Rules
 
@@ -90,7 +118,15 @@ Behavior-changing code changes MUST start with a failing test.
 failing test -> implementation -> passing test
 ```
 
-If a red test cannot be written first (e.g., the change is configuration, infrastructure, or documentation-only), the plan must explain why and name an alternative verification method.
+If a red test cannot be written first (e.g., the change is configuration,
+infrastructure, or documentation-only), the plan must explain why and name an
+alternative verification method.
+
+The standard test command is:
+
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
 
 ## Docs Update Rules
 
@@ -109,7 +145,8 @@ After code changes, update the related documentation in the same working tree:
 
 ## Handoff Rules
 
-`docs/handoff/CURRENT_HANDOFF.md` is the global state document for every code change. Update it whenever code changes.
+`docs/handoff/CURRENT_HANDOFF.md` is the global state document for every code
+change. Update it whenever code changes.
 
 The handoff must contain:
 
@@ -119,27 +156,35 @@ The handoff must contain:
 - Remaining TODO items
 - Scope boundaries (what not to touch)
 
-**Important:** The handoff alone does NOT satisfy per-path contract freshness. Changing only `CURRENT_HANDOFF.md` without updating the corresponding contract docs (specs or runbooks) will FAIL the docs freshness check.
+**Important:** The handoff alone does NOT satisfy per-path contract freshness.
+Changing only `CURRENT_HANDOFF.md` without updating the corresponding contract
+docs (specs or runbooks) will FAIL the docs freshness check.
 
 ## DOC_OWNERS Policy
 
-`docs/DOC_OWNERS.yml` is the policy file that proves every code change is covered by a documentation contract.
+`docs/DOC_OWNERS.yml` is the policy file that proves every code change is covered
+by a documentation contract.
 
 It guarantees:
 
 1. **Coverage**: Every changed code file is matched to a DOC_OWNERS rule.
-2. **Freshness**: Code changes and their required documentation changes exist in the same working tree.
+2. **Freshness**: Code changes and their required documentation changes exist in
+   the same working tree.
 3. **Traceability**: Which spec/runbook/ADR governs this code is always trackable.
 
 Policy summary:
 
-- Code changes must match a `rules[].paths` entry.
+- Code changes that match `code_paths` and are NOT in `ignored_paths` must match
+  a rule.
 - Matched rules require at least one `contract_docs` OR `procedure_docs` change.
-- Code changes always require `docs/handoff/CURRENT_HANDOFF.md` to change.
+- Code changes always require `docs/handoff/CURRENT_HANDOFF.md` to change
+  (via `global_required_on_code_change`).
 - `docs/archive/**`, external URLs, and Notion documents are NOT valid owners.
 - `docs/plans/**` are NOT valid owners.
 - Handoff-only changes do NOT satisfy contract freshness.
 - Unmatched code paths cause failure when `policy.unmatched_code: fail`.
+- `--allow-reviewed-docs` is an exceptional helper flag. It is NOT part of the
+  default workflow. `finish_task.py` runs without this flag.
 
 ## Final Validation
 
@@ -157,14 +202,38 @@ This runs:
 4. `git status --short`
 5. `git diff --stat`
 
-All steps must pass. The finish gate is the last validation step before a task is considered complete.
+All steps must pass. External mirror/Notion apply is NOT included in the default
+validation gate. It runs only when explicitly requested or approved by the
+maintainer.
 
 ## Git Rules
 
-AI agents must NOT commit or push unless explicitly requested by the maintainer. If commit/push is requested, first report:
+AI agents must NOT commit or push unless explicitly requested by the maintainer.
+If commit/push is requested, first report:
 
 - Working tree scope
 - Validation results
 - Intended commit message
 
 Do not revert user changes or unrelated modifications.
+
+## External Documentation Migration Principles
+
+If the project previously used an external tool (Notion, Confluence, wiki, etc.)
+as source of truth, and all documents have been migrated to repo `docs/`:
+
+- The external tool is NO LONGER source of truth.
+- New documents follow these rules:
+
+| Document type | Location |
+|---|---|
+| Technical decisions | `docs/adrs/` |
+| Implementation contracts | `docs/specs/` |
+| Task execution plans | `docs/plans/` |
+| Session handoffs | `docs/handoff/CURRENT_HANDOFF.md` |
+| Repeatable procedures | `docs/runbooks/` |
+
+- The external tool serves as mirror/index only. If content is written there,
+  write it in repo docs first, then add a summary/link to the external tool.
+- Information that exists only in the external tool is considered stale.
+- AI agents MUST prioritize repo `docs/` over any external tool content.
