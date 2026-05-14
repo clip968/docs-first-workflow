@@ -22,6 +22,7 @@
 - `docs/DOC_OWNERS.yml` maps code paths to their governing specs and runbooks.
 - `docs/plans/` and `docs/archive/` are NOT DOC_OWNERS owners.
 - External tool documents are NOT DOC_OWNERS owners.
+- Plans for lower-trust executors must name allowed files, required docs, red test, and verification commands.
 
 ## Start Here
 

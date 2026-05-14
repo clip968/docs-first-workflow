@@ -98,6 +98,35 @@ A plan includes:
 Plans are ephemeral execution guides. They are NOT long-term contracts, NOT source
 of truth, and do NOT satisfy DOC_OWNERS freshness requirements.
 
+## Planner / Executor Split
+
+Large or ambiguous work should be split before implementation. A planner
+(maintainer, senior model, or higher-trust agent) writes the plan. An executor
+(often a lower-trust or open-source model) performs exactly one bounded task from
+that plan.
+
+Recommended responsibilities:
+
+- **Planner**: read specs/ADRs/runbooks, identify scope, write allowed files,
+  docs required, red test, verification commands, and acceptance criteria.
+- **Executor**: stay inside the plan scope, write the failing test first, make
+  the smallest implementation, update required docs, update handoff, and run the
+  finish gate.
+- **Reviewer/CI**: decide completion from diff, command output, docs freshness,
+  and handoff, not from the executor's prose.
+
+Plans intended for open-source model execution MUST include:
+
+- Allowed files and files explicitly out of scope
+- Related spec/ADR/runbook links
+- Required docs to update
+- First red test or explanation why TDD does not apply
+- Focused test, full test, docs freshness, and finish gate commands
+- Handoff updates expected at completion
+
+If the executor discovers that the plan is too broad or wrong, it updates the
+plan and relevant contract docs first, then resumes implementation.
+
 Plans that track a spec's multiple features should be organized under a version
 folder:
 
@@ -142,6 +171,9 @@ After code changes, update the related documentation in the same working tree:
 - `docs/archive/` documents are NOT valid contract owners.
 - External tool documents (Notion, Confluence, etc.) are NOT valid contract owners.
 - `docs/plans/` documents are NOT valid contract owners.
+- Every plan should name the required docs to update. If code changes and no
+  spec/runbook/ADR changes, assume the task is incomplete unless the plan states
+  why the existing contract remains unchanged.
 
 ## Handoff Rules
 

@@ -20,6 +20,7 @@ This template encodes a proven workflow extracted from a real project. It is des
 - **Docs are the source of truth.** External tools (Notion, Confluence, etc.) are mirror/index only.
 - **Specs are implementation contracts.** A spec defines requirements, acceptance criteria, and test mappings.
 - **Plans split specs into small testable tasks.** Plans are not long-term contracts; they are ephemeral execution guides.
+- **Planner and executor roles are separate.** A higher-trust planner writes small plans; an executor agent performs one bounded task at a time.
 - **Behavior changes start with failing tests.** If a red test cannot be written first, the plan must explain why.
 - **DOC_OWNERS enforces docs freshness.** A configuration file maps code paths to their required contract and procedure docs.
 - **Handoff is updated before final validation.** The handoff document carries state to the next agent session.
@@ -166,12 +167,45 @@ DOCS_UPDATE_NOT_REQUIRED=1 python scripts/check_docs_freshness.py --staged
 9. Update `docs/handoff/CURRENT_HANDOFF.md`.
 10. Run `python scripts/finish_task.py` as the final validation gate.
 
+## Planner / Executor Pattern
+
+This template is designed for workflows where a higher-trust model or maintainer
+decomposes work, then a lower-trust or open-source model executes one small plan.
+
+Recommended split:
+
+```text
+Planner
+-> reads specs/ADRs/runbooks
+-> writes a task plan with allowed files, docs required, red test, verification
+
+Executor
+-> performs exactly one task from the plan
+-> writes the failing test first
+-> updates required docs
+-> updates handoff
+-> runs finish_task.py
+
+Reviewer / CI
+-> trusts command output, diff, and docs freshness, not the executor's prose
+```
+
+Executor task plans should include:
+
+- Allowed files and forbidden files
+- Related spec/ADR/runbook
+- The first failing test or reason no red test applies
+- Required docs to update
+- Focused test, full test, docs freshness, and finish gate commands
+- Handoff fields to update
+
 ## What Not to Do
 
 - **Do not use plans as durable contracts.** Plans are ephemeral execution guides and do not satisfy DOC_OWNERS requirements.
 - **Do not use archive docs as owners.** `docs/archive/` documents cannot fulfill contract freshness.
 - **Do not use Notion/external tools as source of truth.** External tools are mirror/index only and never satisfy DOC_OWNERS.
 - **Do not let handoff-only changes satisfy contract freshness.** The handoff document is a global state update but does not replace per-path contract docs.
+- **Do not let plan-only changes satisfy contract freshness.** Plans are task instructions, not durable contracts.
 - **Do not commit/push unless explicitly requested.** Agents produce the working tree and report results; maintainers control commits.
 
 ## Relationship to Source Project

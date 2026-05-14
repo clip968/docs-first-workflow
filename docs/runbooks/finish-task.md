@@ -32,6 +32,10 @@ This runs in sequence:
 
 Any failure stops the gate with exit code 1.
 
+Executor agents must not claim completion when this command fails. Record the
+failed command, exit code, important log lines, and modified files in handoff,
+then stop or ask for review.
+
 ### Failure Handling
 
 | Step | Failure | Action |
@@ -76,6 +80,10 @@ The check reads `docs/DOC_OWNERS.yml` and validates:
 - Each matching rule has at least one contract or procedure doc changed in the same working tree.
 - `docs/handoff/CURRENT_HANDOFF.md` is changed when code changes.
 - No invalid owner docs (archive, external URLs, plans) are used to satisfy requirements.
+
+`docs/plans/**` and `docs/handoff/CURRENT_HANDOFF.md` do not replace contract
+or procedure docs. Plan-only or handoff-only updates are not enough for
+code-changing work.
 
 ## Related
 

@@ -15,21 +15,29 @@ Completed:
 - DOC_OWNERS configured for project layout
 - Initial specs and runbooks created
 - Pre-commit hooks configured for docs freshness
+- Planner / Executor workflow guidance added to README, WORKFLOW, plan template, handoff template, PR template, agent workflow spec, and finish-task runbook
+- `scripts/finish_task.py` command parsing fixed so quoted unittest patterns work when subprocess receives argv directly
+- `tests/test_finish_task.py` added for default test command quote stripping
 
 In progress:
 
-- (first task here)
+- Template release review, if this folder will be published separately
 
 ## Contract Links
 
-- Spec: `docs/specs/0000-project-overview.md`
+- Spec: `docs/specs/0001-agent-workflow.md`
 - ADR: `docs/adrs/0001-docs-as-source-of-truth.md`
-- Runbook: `docs/runbooks/test.md`
-- Plan: (none yet)
+- Runbook: `docs/runbooks/finish-task.md`
+- Plan: docs-first workflow template hardening in current session
 
 ## Reviewed Docs
 
-(None yet)
+- `docs/WORKFLOW.md`
+- `docs/templates/PLAN_TEMPLATE.md`
+- `docs/templates/HANDOFF_TEMPLATE.md`
+- `docs/runbooks/finish-task.md`
+- `docs/specs/0001-agent-workflow.md`
+- `README.md`
 
 ## Next Agent Reads First
 
@@ -42,9 +50,9 @@ In progress:
 
 ## Next Work Candidates
 
-1. Define project requirements in specs
-2. Set up CI workflow
-3. Write first feature
+1. Add a standalone release checklist for publishing the template repository.
+2. Add CI coverage for `scripts/finish_task.py` if the template evolves beyond unittest.
+3. Keep project-specific requirements out of this reusable template.
 
 ## Do Not Touch Without Explicit Scope
 
@@ -56,6 +64,13 @@ In progress:
 ```bash
 python scripts/finish_task.py
 ```
+
+Latest validation:
+
+- `python -m unittest tests.test_finish_task`: OK
+- `python -m unittest discover -s tests -p "test_*.py"`: OK, 15 tests
+- `python scripts/check_docs_freshness.py --all`: OK
+- `python scripts/finish_task.py`: OK
 
 ## External Tools
 

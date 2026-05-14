@@ -92,6 +92,7 @@ rules:
       - ".pre-commit-config.yaml"
       - "scripts/check_docs_freshness.py"
       - "scripts/finish_task.py"
+      - "tests/test_finish_task.py"
     contract_docs:
       - "docs/WORKFLOW.md"
     procedure_docs:

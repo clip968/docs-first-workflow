@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -38,6 +39,16 @@ def get_external_mirror_dry_run_command() -> str | None:
     """Return external mirror dry-run command if a script exists."""
     candidate = Path("scripts/sync_external_mirror.py")
     return f"python {candidate} --dry-run" if candidate.exists() else None
+
+
+def parse_command(command: str) -> list[str]:
+    """Parse command strings consistently across shells.
+
+    subprocess.run() receives argv directly, so shell quotes must be removed
+    before invocation. Plain str.split() leaves single quotes inside arguments
+    on Windows, which breaks unittest discovery patterns such as 'test_*.py'.
+    """
+    return shlex.split(command, posix=True)
 
 
 @dataclass(frozen=True)
@@ -59,7 +70,7 @@ def build_finish_commands(
         commands.append(
             FinishCommand(
                 "unit tests",
-                test_cmd.split(),
+                parse_command(test_cmd),
             )
         )
 
@@ -77,7 +88,7 @@ def build_finish_commands(
             commands.append(
                 FinishCommand(
                     "external mirror dry-run",
-                    ext_cmd.split(),
+                    parse_command(ext_cmd),
                 )
             )
 

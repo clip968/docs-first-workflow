@@ -24,6 +24,21 @@ In progress:
 - Runbook:
 - Plan:
 
+## Plan Execution Record
+
+- Planner:
+- Executor:
+- Task performed:
+- Allowed files followed: Yes / No
+- Scope changes made:
+
+## Docs Updated
+
+- Contract docs:
+- Procedure docs:
+- Handoff:
+- Notes:
+
 ## Reviewed Docs
 
 **Note:** Default `finish_task.py` validation does NOT treat this section as satisfying DOC_OWNERS contract freshness. Only explicit `--allow-reviewed-docs` mode considers this list as supplementary evidence.
@@ -61,6 +76,13 @@ python scripts/check_docs_freshness.py --all
 git status --short
 git diff --stat
 ```
+
+Validation evidence:
+
+- Focused test:
+- Full test:
+- Docs freshness:
+- Finish gate:
 
 ## External Tools
 
