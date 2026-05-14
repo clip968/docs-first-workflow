@@ -1,0 +1,21 @@
+# Docs-First Agent Workflow
+#
+# This workflow uses a docs-first approach. Before committing,
+# ensure code changes are accompanied by matching doc updates.
+# See docs/WORKFLOW.md for the full workflow.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+
+  - repo: local
+    hooks:
+      - id: docs-freshness
+        name: docs freshness
+        entry: python scripts/check_docs_freshness.py --staged
+        language: system
+        pass_filenames: false

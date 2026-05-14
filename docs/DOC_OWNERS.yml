@@ -1,0 +1,98 @@
+# DOC_OWNERS
+#
+# This is NOT a human ownership file. It is a contract routing table.
+#
+# It answers:
+#   - Which docs must move with this code?
+#   - Which spec owns this behavior?
+#   - Which runbook verifies this behavior?
+#   - Did the handoff get updated before final validation?
+#
+# Customize code_paths, ignored_paths, and rules for your project.
+# The rules section must map each group of code paths to their
+# required contract_docs (specs) and procedure_docs (runbooks).
+
+version: 1
+
+policy:
+  # fail | ignore: What happens when a changed code file matches no rule?
+  unmatched_code: fail
+  # If true, docs/archive/ documents cannot satisfy owner requirements.
+  archive_docs_are_invalid_owners: true
+  # If true, external URLs and notion-style references cannot satisfy owner requirements.
+  external_index_is_invalid_owner: true
+  # If false, changing only CURRENT_HANDOFF.md does NOT satisfy contract freshness.
+  handoff_only_satisfies_contract: false
+
+code_paths:
+  - "{{SOURCE_DIR}}/**/*.py"
+  - "app/**/*.py"
+  - "tools/**/*.py"
+  - "scripts/**/*.py"
+  - "{{TEST_DIR}}/**/*.py"
+  - ".github/workflows/**/*.yml"
+  - ".pre-commit-config.yaml"
+  - "pyproject.toml"
+  - "requirements*.txt"
+
+ignored_paths:
+  - "docs/**"
+  - "data/**"
+  - "tmp/**"
+  - ".venv/**"
+  - ".git/**"
+  - "__pycache__/**"
+  - "*.pyc"
+  - "*.pyo"
+  - "*.egg-info/**"
+
+global_required_on_code_change:
+  changed:
+    - "docs/handoff/CURRENT_HANDOFF.md"
+
+rules:
+  # Each rule maps a set of code paths to their required docs.
+  # - contract_docs: specs that define the implementation contract
+  # - procedure_docs: runbooks for testing, building, deploying, etc.
+  #
+  # At least one contract_doc OR procedure_doc must change alongside
+  # a code change in the matched path. The handoff change is always
+  # required globally (see global_required_on_code_change above).
+
+  - id: project-core
+    paths:
+      - "{{SOURCE_DIR}}/**/*.py"
+      - "app/**/*.py"
+    contract_docs:
+      - "docs/specs/0000-project-overview.md"
+    procedure_docs:
+      - "docs/runbooks/test.md"
+
+  - id: tooling
+    paths:
+      - "tools/**/*.py"
+      - "scripts/**/*.py"
+    contract_docs:
+      - "docs/specs/0001-agent-workflow.md"
+    procedure_docs:
+      - "docs/runbooks/test.md"
+      - "docs/runbooks/finish-task.md"
+
+  - id: tests
+    paths:
+      - "{{TEST_DIR}}/**/*.py"
+    contract_docs:
+      - "docs/specs/0000-project-overview.md"
+    procedure_docs:
+      - "docs/runbooks/test.md"
+
+  - id: workflow
+    paths:
+      - ".github/workflows/**/*.yml"
+      - ".pre-commit-config.yaml"
+      - "scripts/check_docs_freshness.py"
+      - "scripts/finish_task.py"
+    contract_docs:
+      - "docs/WORKFLOW.md"
+    procedure_docs:
+      - "docs/runbooks/finish-task.md"

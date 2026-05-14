@@ -1,0 +1,31 @@
+# DOC_OWNERS (Example: python-unittest)
+
+version: 1
+
+policy:
+  unmatched_code: fail
+  archive_docs_are_invalid_owners: true
+  external_index_is_invalid_owner: true
+  handoff_only_satisfies_contract: false
+
+code_paths:
+  - "src/**/*.py"
+  - "tests/**/*.py"
+
+ignored_paths:
+  - "__pycache__/**"
+  - "*.pyc"
+
+global_required_on_code_change:
+  changed:
+    - "docs/handoff/CURRENT_HANDOFF.md"
+
+rules:
+  - id: example-adder
+    paths:
+      - "src/example_adder.py"
+      - "tests/test_example_adder.py"
+    contract_docs:
+      - "docs/specs/0000-example-adder.md"
+    procedure_docs:
+      - "docs/runbooks/test.md"
