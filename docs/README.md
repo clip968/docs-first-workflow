@@ -39,6 +39,14 @@ New sessions read in order:
 4. `docs/INDEX.md`
 5. Relevant `docs/specs/`, `docs/runbooks/`, `docs/adrs/`
 
+For existing-repo installation, ask the agent to read the canonical bootstrap
+URL. The target repo does not need to contain `workflow-implementation.md`.
+Users do not need to write YAML for standard repositories; the installer
+auto-detects project name, language, source directory, test directory, and test
+command. The agent must run `scripts/install_into_repo.py` in dry-run mode
+first, show the detected config, planned files, and tree, then wait for explicit
+approval before rerunning with `--apply`.
+
 Before finishing, update handoff and run:
 
 ```bash

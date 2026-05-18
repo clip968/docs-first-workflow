@@ -54,6 +54,65 @@ Then read at minimum:
 
 Do not revert existing uncommitted changes. Do not touch files unrelated to the current task.
 
+## Existing Repository Installation
+
+To install this workflow into an existing repository, point the agent at the
+canonical bootstrap URL. The target repository does not need to contain
+`workflow-implementation.md`.
+
+```text
+Read https://github.com/clip968/docs-first-workflow/blob/main/workflow-implementation.md
+and install docs-first workflow into this repository.
+```
+
+Local `workflow-implementation.md` files are still supported, but they are
+optional.
+
+The installer auto-detects:
+
+- Project name from the target directory name
+- Language from `package.json`, `go.mod`, `Cargo.toml`, `pyproject.toml`,
+  `requirements.txt`, or `setup.py`
+- Source directory from `src/`, `app/`, or `lib/`
+- Test directory from `tests/`, `test/`, or `spec/`
+- Test command from the detected language and test directory
+
+Use YAML in `workflow-implementation.md` only to override detection.
+
+Agent install flow:
+
+```text
+read workflow-implementation.md
+-> or read the remote bootstrap URL
+-> run install_into_repo.py in dry-run mode with auto-detection
+-> show detected config, planned workflow install, files, conflict copies, and directory tree
+-> ask for explicit approval
+-> run install_into_repo.py --apply only after approval
+```
+
+Dry-run command:
+
+```bash
+python /path/to/docs-first-workflow/scripts/install_into_repo.py \
+  --target . \
+  --template-root /path/to/docs-first-workflow \
+  --bootstrap-url https://github.com/clip968/docs-first-workflow/blob/main/workflow-implementation.md
+```
+
+Apply command after approval:
+
+```bash
+python /path/to/docs-first-workflow/scripts/install_into_repo.py \
+  --target . \
+  --template-root /path/to/docs-first-workflow \
+  --bootstrap-url https://github.com/clip968/docs-first-workflow/blob/main/workflow-implementation.md \
+  --apply
+```
+
+The installer must not overwrite existing files by default. When a target file
+already exists with different content, it writes a
+`*.docs-first-workflow.new` conflict copy for manual review.
+
 ## Spec Contract
 
 Implementation is governed by spec contracts. If a relevant spec exists, read it first.

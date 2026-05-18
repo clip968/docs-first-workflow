@@ -23,6 +23,23 @@ scope.
 - Use implementation mode for durable behavior changes:
   `spec -> plan -> failing test -> implementation -> docs -> handoff -> finish_task`.
 
+## Existing Repo Installation
+
+When a target repository asks you to read a docs-first workflow bootstrap URL
+or `workflow-implementation.md` and install this workflow:
+
+1. Run `scripts/install_into_repo.py` without `--apply`.
+2. Pass `--bootstrap-url` when the user provided a remote bootstrap URL.
+3. Let the installer auto-detect project settings unless the bootstrap source
+   explicitly overrides them.
+4. Show the detected config, planned install, affected files, conflict copies,
+   and directory tree.
+5. Ask for explicit approval.
+6. Run again with `--apply` only after the user agrees.
+
+Do not overwrite existing target files. Review `.docs-first-workflow.new`
+conflict copies with the maintainer.
+
 ## Implementation Rules
 
 - Behavior-changing code changes start with a failing test.

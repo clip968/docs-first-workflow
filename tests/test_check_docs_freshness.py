@@ -407,13 +407,21 @@ class CheckDocsFreshnessTests(unittest.TestCase):
 
     def test_index_and_reports_are_classified_as_docs(self) -> None:
         classification = check_docs_freshness.classify_changed_files(
-            ["docs/INDEX.md", "docs/reports/html-fixture-spike.md"],
+            [
+                "docs/INDEX.md",
+                "docs/reports/html-fixture-spike.md",
+                "workflow-implementation.md",
+            ],
             self.config(),
         )
 
         self.assertEqual(
             classification["docs_files"],
-            ["docs/INDEX.md", "docs/reports/html-fixture-spike.md"],
+            [
+                "docs/INDEX.md",
+                "docs/reports/html-fixture-spike.md",
+                "workflow-implementation.md",
+            ],
         )
         self.assertEqual(classification["other_files"], [])
 

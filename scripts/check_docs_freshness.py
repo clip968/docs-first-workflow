@@ -75,6 +75,7 @@ DOCS_EXACT = {
     "README.md",
     "AGENTS.md",
     "CLAUDE.md",
+    "workflow-implementation.md",
     ".github/pull_request_template.md",
 }
 HANDOFF_DOC = "docs/handoff/CURRENT_HANDOFF.md"

@@ -39,14 +39,18 @@ TEMPLATE_DIR_NAME = "workflow-template"
 # Files that contain placeholders needing replacement
 PLACEHOLDER_FILES = [
     "README.md",
+    "AGENTS.md",
+    "workflow-implementation.md",
     "docs/WORKFLOW.md",
     "docs/DOC_OWNERS.yml",
+    "docs/INDEX.md",
     "docs/README.md",
     "docs/specs/0000-project-overview.md",
     "docs/specs/0001-agent-workflow.md",
     "docs/handoff/CURRENT_HANDOFF.md",
     "docs/runbooks/test.md",
     "docs/runbooks/finish-task.md",
+    "docs/templates/WORKFLOW_IMPLEMENTATION_TEMPLATE.md",
     ".github/workflows/docs-freshness.yml",
     ".pre-commit-config.yaml",
 ]

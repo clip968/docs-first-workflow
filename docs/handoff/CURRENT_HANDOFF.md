@@ -11,12 +11,12 @@
 
 Last completed task:
 
-- Added DOC_OWNERS priority/fallback resolution so specific owner docs cannot be bypassed by broad rules.
-- Added spike/report, handoff-history, docs index, and root AGENTS guidance to the workflow template.
+- Added auto-detecting, dry-run-first existing-repo installer flow driven by remote bootstrap URLs or optional local `workflow-implementation.md`.
+- Preserved previous DOC_OWNERS priority/fallback, spike/report, handoff-history, docs index, and root AGENTS guidance.
 
 Current task:
 
-- Final validation for workflow hardening changes.
+- Final validation for installer/bootstrap changes.
 
 ## Contract Links
 
@@ -29,7 +29,7 @@ Current task:
 
 - Related spec: `docs/specs/0001-agent-workflow.md`
 - Contract changed: Yes
-- Reason: DOC_OWNERS overlap handling, spike mode, handoff limits, docs index, and AGENTS guidance are now part of the workflow contract.
+- Reason: Existing-repo installation now supports remote bootstrap URLs, auto-detects standard repo settings, requires dry-run preview, explicit user approval before apply, and conflict-copy preservation.
 - Required docs updated:
   - `docs/WORKFLOW.md`
   - `docs/specs/0001-agent-workflow.md`
@@ -44,10 +44,12 @@ Current task:
 - `docs/templates/PLAN_TEMPLATE.md`
 - `docs/templates/HANDOFF_TEMPLATE.md`
 - `docs/templates/REPORT_TEMPLATE.md`
+- `docs/templates/WORKFLOW_IMPLEMENTATION_TEMPLATE.md`
 - `docs/runbooks/finish-task.md`
 - `docs/specs/0001-agent-workflow.md`
 - `docs/INDEX.md`
 - `AGENTS.md`
+- `workflow-implementation.md`
 - `README.md`
 
 ## Next Agent Reads First
@@ -77,7 +79,8 @@ python scripts/finish_task.py
 
 Latest validation:
 
-- `python -m unittest discover -s tests -p "test_*.py"`: OK, 22 tests
+- `python -m unittest tests.test_install_into_repo -v`: OK, 8 tests
+- `python -m unittest discover -s tests -p "test_*.py"`: OK, 30 tests
 - `python scripts/check_docs_freshness.py --all`: OK
 - `python scripts/finish_task.py`: OK
 

@@ -35,6 +35,7 @@ workflow-template/
   LICENSE.example              # Example license (MIT)
   .gitignore                   # Standard ignores
   AGENTS.md                    # Cross-agent operating rules
+  workflow-implementation.md   # Bootstrap prompt/config for existing repos
   .pre-commit-config.yaml      # Pre-commit hook for docs freshness
   .github/
     pull_request_template.md   # PR template with TDD + docs sections
@@ -64,15 +65,18 @@ workflow-template/
       SPEC_TEMPLATE.md
       PLAN_TEMPLATE.md
       REPORT_TEMPLATE.md
+      WORKFLOW_IMPLEMENTATION_TEMPLATE.md
       ADR_TEMPLATE.md
       HANDOFF_TEMPLATE.md
       RUNBOOK_TEMPLATE.md
   scripts/
     check_docs_freshness.py    # Validates contract-freshness of changes
     finish_task.py             # Final validation gate (tests + freshness + git status)
+    install_into_repo.py       # Dry-run-first installer for existing repositories
     init_workflow_template.py  # One-time project initialization script
   tests/
     test_check_docs_freshness.py
+    test_install_into_repo.py
   examples/
     python-unittest/           # Minimal working example
 ```
@@ -117,6 +121,64 @@ Replace `{{PROJECT_NAME}}`, `{{TEST_COMMAND}}`, `{{SOURCE_DIR}}`, `{{TEST_DIR}}`
    ```bash
    python scripts/finish_task.py
    ```
+
+## How to Install Into an Existing Repository
+
+For an existing repository, point the agent at the canonical bootstrap URL. The
+target repository does not need to contain `workflow-implementation.md`.
+
+```text
+Read https://github.com/clip968/docs-first-workflow/blob/main/workflow-implementation.md
+and install docs-first workflow into this repository.
+```
+
+Standard repositories do not need YAML. The installer detects project name,
+language, source directory, test directory, and test command from files such as
+`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `src/`, `app/`,
+`lib/`, `tests/`, `test/`, and `spec/`.
+
+Use optional YAML only when you want to override detection:
+
+```yaml
+project_name: "custom-name"
+source_dir: "service"
+test_dir: "checks"
+test_command: "python -m unittest discover -s checks -p 'check_*.py'"
+install_mode: dry-run-first
+```
+
+Then ask an agent:
+
+```text
+Read the bootstrap URL and install the workflow.
+```
+
+The agent should run a dry run first:
+
+```bash
+python /path/to/docs-first-workflow/scripts/install_into_repo.py \
+  --target . \
+  --template-root /path/to/docs-first-workflow \
+  --bootstrap-url https://github.com/clip968/docs-first-workflow/blob/main/workflow-implementation.md
+```
+
+The dry run prints the workflow being installed, the files that would be
+created, detected config, conflict copies that would be written, and the
+resulting directory tree. No files are written in this mode.
+
+Install only after explicit approval:
+
+```bash
+python /path/to/docs-first-workflow/scripts/install_into_repo.py \
+  --target . \
+  --template-root /path/to/docs-first-workflow \
+  --bootstrap-url https://github.com/clip968/docs-first-workflow/blob/main/workflow-implementation.md \
+  --apply
+```
+
+Existing files are never overwritten by default. If a destination file already
+exists with different content, the installer writes
+`<filename>.docs-first-workflow.new` so the maintainer can review and merge it.
 
 ## How to Customize DOC_OWNERS
 

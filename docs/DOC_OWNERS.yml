@@ -112,9 +112,12 @@ rules:
       - ".pre-commit-config.yaml"
       - "scripts/check_docs_freshness.py"
       - "scripts/finish_task.py"
+      - "scripts/install_into_repo.py"
       - "tests/test_check_docs_freshness.py"
       - "tests/test_finish_task.py"
+      - "tests/test_install_into_repo.py"
       - "AGENTS.md"
+      - "workflow-implementation.md"
     contract_docs:
       - "docs/WORKFLOW.md"
     procedure_docs:

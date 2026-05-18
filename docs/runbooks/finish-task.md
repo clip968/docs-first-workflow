@@ -93,6 +93,22 @@ record a Contract Review in the plan or handoff. The default finish gate remains
 strict and does not pass reviewed docs unless the maintainer explicitly runs the
 checker with `--allow-reviewed-docs`.
 
+## Existing Repo Installer Check
+
+When changing `scripts/install_into_repo.py`, run:
+
+```bash
+python -m unittest tests.test_install_into_repo -v
+```
+
+The installer must be dry-run-first. A dry run prints the installation plan and
+directory tree without writing files. It auto-detects project name, language,
+source directory, test directory, and test command, with optional
+`workflow-implementation.md` or `--bootstrap-url` YAML overrides. GitHub blob
+bootstrap URLs are converted to raw URLs before fetching. Applying the plan
+requires `--apply`. Existing destination files must not be overwritten;
+conflicts are written as `*.docs-first-workflow.new` files for manual review.
+
 ## Related
 
 - Spec: `docs/specs/0001-agent-workflow.md`

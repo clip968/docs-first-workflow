@@ -36,6 +36,10 @@ This project uses AI-assisted development. This spec defines the workflow that a
 - REQ-WF-013: Spike work must not change production behavior and must record investigation output in `docs/reports/` before converting to implementation work.
 - REQ-WF-014: `CURRENT_HANDOFF.md` must stay focused on current state; detailed past logs belong in `docs/handoff/history/`.
 - REQ-WF-015: Repositories using this template should include a root `AGENTS.md` and `docs/INDEX.md` so multiple agent tools share the same operating rules and routing map.
+- REQ-WF-016: Existing-repo installation must be dry-run-first. Agents must show detected config, planned files, and directory tree, then wait for explicit user approval before applying changes.
+- REQ-WF-017: The installer must preserve existing files by writing conflict copies instead of overwriting by default.
+- REQ-WF-018: The installer must auto-detect standard repo settings so users do not need to write bootstrap YAML unless they want overrides.
+- REQ-WF-019: Existing-repo installation must support remote bootstrap URLs so the target repo does not need a local bootstrap file.
 
 ## Acceptance Criteria
 
@@ -44,6 +48,10 @@ This project uses AI-assisted development. This spec defines the workflow that a
 - AC-WF-003: A task plan can be handed to a lower-trust executor without relying on unstated context because it names scope, required docs, tests, and finish gate.
 - AC-WF-004: When broad and specific DOC_OWNERS rules overlap, changing only the broad rule's docs does not satisfy the specific rule's contract freshness.
 - AC-WF-005: Spike output can be stored as a report, but report-only changes cannot satisfy DOC_OWNERS owner requirements for code changes.
+- AC-WF-006: Running the existing-repo installer without `--apply` prints an install preview with detected config and writes no files.
+- AC-WF-007: Running the existing-repo installer with `--apply` creates missing workflow files and writes `.docs-first-workflow.new` copies for conflicting existing files.
+- AC-WF-008: A plain `workflow-implementation.md` with no YAML still produces detected project settings from repository files.
+- AC-WF-009: A GitHub `blob` bootstrap URL is converted to its raw content URL and can override detected settings.
 
 ## Test Mapping
 
@@ -56,6 +64,9 @@ This project uses AI-assisted development. This spec defines the workflow that a
 - TEST-WF-003:
   - Covers: REQ-WF-013, REQ-WF-014, REQ-WF-015
   - Command: Review `docs/WORKFLOW.md`, `docs/templates/HANDOFF_TEMPLATE.md`, `AGENTS.md`, and `docs/INDEX.md`.
+- TEST-WF-004:
+  - Covers: REQ-WF-016, REQ-WF-017, REQ-WF-018, REQ-WF-019, AC-WF-006, AC-WF-007, AC-WF-008, AC-WF-009
+  - Command: `python -m unittest tests.test_install_into_repo -v`
 
 ## Docs Ownership
 

@@ -7,6 +7,7 @@ details in specs, runbooks, plans, reports, or handoff history.
 |---|---|---|---|---|---|
 | Workflow checker | `scripts/check_docs_freshness.py`, `tests/test_check_docs_freshness.py` | `docs/WORKFLOW.md`, `docs/specs/0001-agent-workflow.md` | `docs/runbooks/finish-task.md` | `python -m unittest tests.test_check_docs_freshness -v` | Current session |
 | Finish gate | `scripts/finish_task.py`, `tests/test_finish_task.py` | `docs/WORKFLOW.md`, `docs/specs/0001-agent-workflow.md` | `docs/runbooks/finish-task.md` | `python -m unittest tests.test_finish_task -v` | - |
+| Existing repo installer | `scripts/install_into_repo.py`, `tests/test_install_into_repo.py`, `workflow-implementation.md` | `docs/WORKFLOW.md`, `docs/specs/0001-agent-workflow.md` | `docs/runbooks/finish-task.md` | `python -m unittest tests.test_install_into_repo -v` | - |
 | Workflow template docs | `README.md`, `docs/**`, `.github/pull_request_template.md`, `AGENTS.md` | `docs/specs/0001-agent-workflow.md` | `docs/runbooks/finish-task.md` | `python -m unittest discover -s tests -p "test_*.py"` | - |
 
 ## Owner Rule Priority
