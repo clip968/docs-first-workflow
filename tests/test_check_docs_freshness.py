@@ -64,6 +64,70 @@ src/foo.py:
 """
 
 
+OVERLAPPING_DOC_OWNERS = """
+version: 1
+
+policy:
+  unmatched_code: fail
+  multiple_matches: require_highest_priority
+  fallback_rules_allowed: true
+
+code_paths:
+  - "src/**/*.py"
+
+global_required_on_code_change:
+  changed:
+    - "docs/handoff/CURRENT_HANDOFF.md"
+
+rules:
+  - id: broad-python
+    priority: 30
+    fallback: true
+    paths:
+      - "src/**/*.py"
+    contract_docs:
+      - "docs/specs/broad-python.md"
+
+  - id: guide-ff14-crawler
+    priority: 90
+    paths:
+      - "src/guide_ff14/**/*.py"
+    contract_docs:
+      - "docs/specs/guide-ff14-crawler.md"
+"""
+
+
+AMBIGUOUS_DOC_OWNERS = """
+version: 1
+
+policy:
+  unmatched_code: fail
+  multiple_matches: require_highest_priority
+
+code_paths:
+  - "src/**/*.py"
+
+global_required_on_code_change:
+  changed:
+    - "docs/handoff/CURRENT_HANDOFF.md"
+
+rules:
+  - id: crawler-a
+    priority: 90
+    paths:
+      - "src/guide_ff14/**/*.py"
+    contract_docs:
+      - "docs/specs/crawler-a.md"
+
+  - id: crawler-b
+    priority: 90
+    paths:
+      - "src/guide_ff14/**/*.py"
+    contract_docs:
+      - "docs/specs/crawler-b.md"
+"""
+
+
 class CheckDocsFreshnessTests(unittest.TestCase):
     """Test suite for check_docs_freshness.py core logic."""
 
@@ -113,6 +177,75 @@ class CheckDocsFreshnessTests(unittest.TestCase):
 
         self.assertTrue(result.should_fail)
         self.assertEqual(result.unmatched_code_files, ["scripts/new_tool.py"])
+
+    def test_overlapping_rule_requires_highest_priority_doc(self) -> None:
+        config = check_docs_freshness.load_doc_owners_from_text(OVERLAPPING_DOC_OWNERS)
+
+        result = check_docs_freshness.evaluate_freshness(
+            [
+                "src/guide_ff14/item_extractor.py",
+                "docs/specs/broad-python.md",
+                "docs/handoff/CURRENT_HANDOFF.md",
+            ],
+            config,
+        )
+
+        self.assertTrue(result.should_fail)
+        self.assertIn("src/guide_ff14/item_extractor.py", result.missing_rule_docs)
+        detail = result.missing_rule_docs["src/guide_ff14/item_extractor.py"]
+        self.assertEqual(detail["rule"], "guide-ff14-crawler")
+        self.assertEqual(detail["required_docs"], ["docs/specs/guide-ff14-crawler.md"])
+
+    def test_overlapping_rule_passes_when_highest_priority_doc_is_fresh(self) -> None:
+        config = check_docs_freshness.load_doc_owners_from_text(OVERLAPPING_DOC_OWNERS)
+
+        result = check_docs_freshness.evaluate_freshness(
+            [
+                "src/guide_ff14/item_extractor.py",
+                "docs/specs/guide-ff14-crawler.md",
+                "docs/handoff/CURRENT_HANDOFF.md",
+            ],
+            config,
+        )
+
+        self.assertFalse(result.should_fail)
+
+    def test_fallback_rule_applies_when_no_specific_rule_matches(self) -> None:
+        config = check_docs_freshness.load_doc_owners_from_text(OVERLAPPING_DOC_OWNERS)
+
+        result = check_docs_freshness.evaluate_freshness(
+            [
+                "src/shared/parser.py",
+                "docs/specs/broad-python.md",
+                "docs/handoff/CURRENT_HANDOFF.md",
+            ],
+            config,
+        )
+
+        self.assertFalse(result.should_fail)
+
+    def test_same_highest_priority_matches_are_ambiguous(self) -> None:
+        config = check_docs_freshness.load_doc_owners_from_text(AMBIGUOUS_DOC_OWNERS)
+
+        result = check_docs_freshness.evaluate_freshness(
+            [
+                "src/guide_ff14/item_extractor.py",
+                "docs/specs/crawler-a.md",
+                "docs/handoff/CURRENT_HANDOFF.md",
+            ],
+            config,
+        )
+
+        self.assertTrue(result.should_fail)
+        self.assertEqual(
+            result.ambiguous_rule_matches,
+            {
+                "src/guide_ff14/item_extractor.py": {
+                    "priority": 90,
+                    "rules": ["crawler-a", "crawler-b"],
+                }
+            },
+        )
 
     # --- Test 4: code file changed + missing global handoff => fail ---
     def test_code_file_with_contract_doc_but_missing_global_handoff_fails(self) -> None:
@@ -182,6 +315,35 @@ class CheckDocsFreshnessTests(unittest.TestCase):
             {"project-core": ["https://notion.so/example-page"]},
         )
 
+    def test_plan_and_report_docs_do_not_count_as_owners(self) -> None:
+        text = NEW_DOC_OWNERS.replace(
+            "docs/specs/0000-project-overview.md",
+            "docs/plans/implementation-plan.md",
+        ).replace(
+            "docs/runbooks/test.md",
+            "docs/reports/spike-report.md",
+        )
+        result = check_docs_freshness.evaluate_freshness(
+            [
+                "src/foo.py",
+                "docs/plans/implementation-plan.md",
+                "docs/reports/spike-report.md",
+                "docs/handoff/CURRENT_HANDOFF.md",
+            ],
+            check_docs_freshness.load_doc_owners_from_text(text),
+        )
+
+        self.assertTrue(result.should_fail)
+        self.assertEqual(
+            result.invalid_owner_docs,
+            {
+                "project-core": [
+                    "docs/plans/implementation-plan.md",
+                    "docs/reports/spike-report.md",
+                ]
+            },
+        )
+
     # --- Test 8: legacy schema compatibility ---
     def test_legacy_doc_owners_schema_still_works(self) -> None:
         config = check_docs_freshness.load_doc_owners_from_text(LEGACY_DOC_OWNERS)
@@ -207,6 +369,17 @@ class CheckDocsFreshnessTests(unittest.TestCase):
         self.assertEqual(config.rules[0].id, "project-core")
         self.assertEqual(config.rules[0].paths, ["src/**/*.py"])
 
+    def test_limited_yaml_parser_supports_priority_and_fallback(self) -> None:
+        with mock.patch.object(check_docs_freshness, "yaml", None):
+            config = check_docs_freshness.load_doc_owners_from_text(OVERLAPPING_DOC_OWNERS)
+
+        self.assertEqual(config.policy["multiple_matches"], "require_highest_priority")
+        self.assertEqual(config.policy["fallback_rules_allowed"], True)
+        self.assertEqual(config.rules[0].priority, 30)
+        self.assertEqual(config.rules[0].fallback, True)
+        self.assertEqual(config.rules[1].priority, 90)
+        self.assertEqual(config.rules[1].fallback, False)
+
     # --- Test 10: reviewed docs can optionally satisfy ---
     def test_reviewed_docs_can_optionally_satisfy_contract_docs(self) -> None:
         result = check_docs_freshness.evaluate_freshness(
@@ -231,6 +404,18 @@ class CheckDocsFreshnessTests(unittest.TestCase):
         self.assertFalse(result.should_fail)
         self.assertFalse(result.classification["code_change"])
         self.assertTrue(result.classification["docs_change"])
+
+    def test_index_and_reports_are_classified_as_docs(self) -> None:
+        classification = check_docs_freshness.classify_changed_files(
+            ["docs/INDEX.md", "docs/reports/html-fixture-spike.md"],
+            self.config(),
+        )
+
+        self.assertEqual(
+            classification["docs_files"],
+            ["docs/INDEX.md", "docs/reports/html-fixture-spike.md"],
+        )
+        self.assertEqual(classification["other_files"], [])
 
     # --- Test 12: override passes even without docs ---
     def test_override_passes_even_without_docs(self) -> None:

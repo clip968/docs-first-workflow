@@ -98,6 +98,45 @@ A plan includes:
 Plans are ephemeral execution guides. They are NOT long-term contracts, NOT source
 of truth, and do NOT satisfy DOC_OWNERS freshness requirements.
 
+## Work Modes
+
+Use the smallest mode that fits the work.
+
+### Spike / Exploration Mode
+
+Use spike mode when the next step is investigation rather than implementation:
+external site structure review, fixture collection, parser option comparison,
+live integration feasibility checks, or similar discovery work.
+
+Spike mode flow:
+
+```text
+spike brief
+-> investigation
+-> report in docs/reports/
+-> discard or convert to spec/plan
+```
+
+Spike mode may create notes, fixtures, and reports, but it must not change
+production behavior. If the spike produces an implementation direction, convert
+the result into a spec or plan and enter implementation mode.
+
+### Implementation Mode
+
+Use implementation mode for behavior changes and durable workflow changes.
+
+Implementation mode flow:
+
+```text
+spec
+-> plan
+-> failing test
+-> implementation
+-> docs update
+-> handoff update
+-> finish_task
+```
+
 ## Planner / Executor Split
 
 Large or ambiguous work should be split before implementation. A planner
@@ -166,14 +205,40 @@ After code changes, update the related documentation in the same working tree:
 | Behavior contract change | `docs/specs/` |
 | Repeatable procedure change | `docs/runbooks/` |
 | Technical decision change | `docs/adrs/` |
+| Investigation / spike result | `docs/reports/` |
 | Session/agent state change | `docs/handoff/CURRENT_HANDOFF.md` |
 
 - `docs/archive/` documents are NOT valid contract owners.
 - External tool documents (Notion, Confluence, etc.) are NOT valid contract owners.
 - `docs/plans/` documents are NOT valid contract owners.
+- `docs/reports/` documents are NOT valid contract owners.
 - Every plan should name the required docs to update. If code changes and no
   spec/runbook/ADR changes, assume the task is incomplete unless the plan states
   why the existing contract remains unchanged.
+
+### Contract Review Exception
+
+Some code changes fix implementation so it satisfies an existing contract. In
+that case the spec or runbook may not need text changes. Do not make filler doc
+edits just to pass the gate. Instead, record a contract review in the plan or
+handoff:
+
+```markdown
+## Contract Review
+
+- Related spec: `docs/specs/<spec>.md`
+- Contract changed: No
+- Reason: This task fixes implementation behavior to satisfy existing <REQ/AC>.
+- Required docs updated:
+  - `docs/handoff/CURRENT_HANDOFF.md`
+- Verification:
+  - `<focused test command>`
+  - `python scripts/finish_task.py`
+```
+
+This is an explicit maintainer-reviewed exception path, not the default. The
+default `finish_task.py` command still runs the docs freshness check without
+`--allow-reviewed-docs`.
 
 ## Handoff Rules
 
@@ -182,11 +247,21 @@ change. Update it whenever code changes.
 
 The handoff must contain:
 
-- Completed changes
-- Related spec/runbook/ADR/plan references
-- Validation commands and results
-- Remaining TODO items
-- Scope boundaries (what not to touch)
+- Current phase
+- Current branch and local path
+- Last completed task
+- Next task
+- Up to 5 documents the next agent should read first
+- Latest finish gate result
+- Scope boundaries and explicit "do not touch" items
+- Links to detailed history entries, if needed
+
+Keep `CURRENT_HANDOFF.md` short. Move detailed past logs to:
+
+```text
+docs/handoff/history/
+  YYYY-MM-DD-<task>.md
+```
 
 **Important:** The handoff alone does NOT satisfy per-path contract freshness.
 Changing only `CURRENT_HANDOFF.md` without updating the corresponding contract
@@ -208,15 +283,39 @@ Policy summary:
 
 - Code changes that match `code_paths` and are NOT in `ignored_paths` must match
   a rule.
-- Matched rules require at least one `contract_docs` OR `procedure_docs` change.
+- Each rule may define `priority` and `fallback`.
+- When `policy.multiple_matches: require_highest_priority`, overlapping rules
+  are resolved before freshness is checked.
+- If `policy.fallback_rules_allowed: true`, fallback rules apply only when no
+  non-fallback rule matches the changed file.
+- The selected highest-priority rule requires at least one `contract_docs` OR
+  `procedure_docs` change.
+- If multiple selected rules have the same highest priority, the check fails as
+  ambiguous ownership.
 - Code changes always require `docs/handoff/CURRENT_HANDOFF.md` to change
   (via `global_required_on_code_change`).
 - `docs/archive/**`, external URLs, and Notion documents are NOT valid owners.
 - `docs/plans/**` are NOT valid owners.
+- `docs/reports/**` are NOT valid owners.
 - Handoff-only changes do NOT satisfy contract freshness.
 - Unmatched code paths cause failure when `policy.unmatched_code: fail`.
 - `--allow-reviewed-docs` is an exceptional helper flag. It is NOT part of the
   default workflow. `finish_task.py` runs without this flag.
+
+Priority values should describe ownership specificity, not current task urgency.
+Recommended scale:
+
+| Priority | Meaning |
+|---|---|
+| 100 | Exact file owner |
+| 90 | Feature/module owner |
+| 70 | Subsystem/package owner |
+| 50 | Tooling/workflow owner |
+| 30 | Broad project fallback |
+
+Task status belongs in `docs/plans/`, `docs/INDEX.md`, and
+`docs/handoff/CURRENT_HANDOFF.md`; it must not be encoded by constantly changing
+DOC_OWNERS priorities.
 
 ## Final Validation
 

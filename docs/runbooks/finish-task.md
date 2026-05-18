@@ -77,13 +77,21 @@ To switch from unittest to pytest:
 The check reads `docs/DOC_OWNERS.yml` and validates:
 
 - Every changed code file matches a rule.
-- Each matching rule has at least one contract or procedure doc changed in the same working tree.
+- Overlapping rules resolve to the highest-priority non-fallback owner when
+  `policy.multiple_matches: require_highest_priority`.
+- Equal highest-priority matches fail as ambiguous ownership.
+- The selected owner rule has at least one contract or procedure doc changed in the same working tree.
 - `docs/handoff/CURRENT_HANDOFF.md` is changed when code changes.
-- No invalid owner docs (archive, external URLs, plans) are used to satisfy requirements.
+- No invalid owner docs (archive, external URLs, plans, reports) are used to satisfy requirements.
 
-`docs/plans/**` and `docs/handoff/CURRENT_HANDOFF.md` do not replace contract
-or procedure docs. Plan-only or handoff-only updates are not enough for
-code-changing work.
+`docs/plans/**`, `docs/reports/**`, and `docs/handoff/CURRENT_HANDOFF.md` do
+not replace contract or procedure docs. Plan-only, report-only, or handoff-only
+updates are not enough for code-changing work.
+
+If the code change only restores behavior promised by an existing contract,
+record a Contract Review in the plan or handoff. The default finish gate remains
+strict and does not pass reviewed docs unless the maintainer explicitly runs the
+checker with `--allow-reviewed-docs`.
 
 ## Related
 

@@ -9,11 +9,11 @@
 
 ## Current State
 
-Completed:
+Last completed task:
 
 -
 
-In progress:
+Current task:
 
 -
 
@@ -29,8 +29,17 @@ In progress:
 - Planner:
 - Executor:
 - Task performed:
+- Work mode: Spike / Implementation
 - Allowed files followed: Yes / No
 - Scope changes made:
+
+## Contract Review
+
+- Related spec:
+- Contract changed: Yes / No
+- Reason:
+- Required docs updated:
+- Verification:
 
 ## Docs Updated
 
@@ -50,9 +59,11 @@ In progress:
 1. `docs/WORKFLOW.md`
 2. `docs/handoff/CURRENT_HANDOFF.md`
 3. `docs/DOC_OWNERS.yml`
-4. `docs/runbooks/test.md`
-5. `docs/runbooks/finish-task.md`
-6. Relevant `docs/specs/`, `docs/runbooks/`, `docs/adrs/`
+4. `docs/INDEX.md`
+5. Relevant `docs/specs/`, `docs/runbooks/`, `docs/adrs/`
+
+Keep this list to five entries. Link detailed past context below instead of
+expanding this file.
 
 ## Next Work Candidates
 
@@ -63,6 +74,10 @@ In progress:
 - Existing user changes
 - Files outside current task scope
 -
+
+## History Links
+
+- `docs/handoff/history/...`
 
 ## Validation
 

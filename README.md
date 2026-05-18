@@ -34,6 +34,7 @@ workflow-template/
   README.md                    # This file
   LICENSE.example              # Example license (MIT)
   .gitignore                   # Standard ignores
+  AGENTS.md                    # Cross-agent operating rules
   .pre-commit-config.yaml      # Pre-commit hook for docs freshness
   .github/
     pull_request_template.md   # PR template with TDD + docs sections
@@ -41,6 +42,7 @@ workflow-template/
       docs-freshness.yml       # CI workflow for docs freshness
   docs/
     README.md                  # Docs directory overview
+    INDEX.md                   # Module-to-spec/runbook/test routing map
     WORKFLOW.md                # Full workflow specification
     DOC_OWNERS.yml             # Code-to-doc contract routing
     specs/                     # Implementation contracts
@@ -50,14 +52,18 @@ workflow-template/
       0001-docs-as-source-of-truth.md
     plans/                     # Ephemeral implementation plans
       .gitkeep
+    reports/                   # Spike / investigation reports
+      .gitkeep
     runbooks/                  # Repeatable procedures
       test.md
       finish-task.md
     handoff/
       CURRENT_HANDOFF.md       # Session state handoff
+      history/                 # Detailed past handoff logs
     templates/                 # Document templates
       SPEC_TEMPLATE.md
       PLAN_TEMPLATE.md
+      REPORT_TEMPLATE.md
       ADR_TEMPLATE.md
       HANDOFF_TEMPLATE.md
       RUNBOOK_TEMPLATE.md
@@ -124,16 +130,35 @@ Replace `{{PROJECT_NAME}}`, `{{TEST_COMMAND}}`, `{{SOURCE_DIR}}`, `{{TEST_DIR}}`
 Edit the `rules` section to map your project's code paths to their required docs:
 
 ```yaml
+policy:
+  unmatched_code: fail
+  multiple_matches: require_highest_priority
+  fallback_rules_allowed: true
+
 rules:
-  - id: my-service
+  - id: my-feature
+    priority: 90
+    paths:
+      - "src/my_feature/**/*.py"
+    contract_docs:
+      - "docs/specs/my-feature.md"
+    procedure_docs:
+      - "docs/runbooks/test.md"
+
+  - id: project-core
+    priority: 30
+    fallback: true
     paths:
       - "src/**/*.py"
-      - "app/**/*.py"
     contract_docs:
       - "docs/specs/0000-project-overview.md"
     procedure_docs:
       - "docs/runbooks/test.md"
 ```
+
+Priorities describe stable contract ownership specificity, not current task
+urgency. If a specific rule and broad fallback rule both match one file, the
+specific non-fallback rule must be fresh.
 
 ## How to Run Validation
 
@@ -158,14 +183,15 @@ DOCS_UPDATE_NOT_REQUIRED=1 python scripts/check_docs_freshness.py --staged
 
 1. Read `docs/WORKFLOW.md` and `docs/handoff/CURRENT_HANDOFF.md` first.
 2. Check `git status` before making changes.
-3. Read the relevant spec for the code you are changing.
-4. If no spec exists for the change, write one first.
-5. Split the work into small tasks. Write a plan if the work is non-trivial.
-6. For each behavior-changing task, write a failing test first.
-7. Implement the minimum code to pass the test.
-8. Update related docs (specs, runbooks, ADRs).
-9. Update `docs/handoff/CURRENT_HANDOFF.md`.
-10. Run `python scripts/finish_task.py` as the final validation gate.
+3. Read `docs/DOC_OWNERS.yml` and `docs/INDEX.md`.
+4. Read the relevant spec for the code you are changing.
+5. If no spec exists for the change, write one first.
+6. Split the work into small tasks. Write a plan if the work is non-trivial.
+7. For each behavior-changing task, write a failing test first.
+8. Implement the minimum code to pass the test.
+9. Update related docs (specs, runbooks, ADRs).
+10. Update `docs/handoff/CURRENT_HANDOFF.md`.
+11. Run `python scripts/finish_task.py` as the final validation gate.
 
 ## Planner / Executor Pattern
 
@@ -202,10 +228,12 @@ Executor task plans should include:
 ## What Not to Do
 
 - **Do not use plans as durable contracts.** Plans are ephemeral execution guides and do not satisfy DOC_OWNERS requirements.
+- **Do not use reports as durable contracts.** Spike reports capture investigation results and do not satisfy DOC_OWNERS requirements.
 - **Do not use archive docs as owners.** `docs/archive/` documents cannot fulfill contract freshness.
 - **Do not use Notion/external tools as source of truth.** External tools are mirror/index only and never satisfy DOC_OWNERS.
 - **Do not let handoff-only changes satisfy contract freshness.** The handoff document is a global state update but does not replace per-path contract docs.
 - **Do not let plan-only changes satisfy contract freshness.** Plans are task instructions, not durable contracts.
+- **Do not encode task urgency in DOC_OWNERS priority.** Priority is stable contract ownership metadata.
 - **Do not commit/push unless explicitly requested.** Agents produce the working tree and report results; maintainers control commits.
 
 ## Relationship to Source Project

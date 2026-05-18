@@ -17,6 +17,11 @@ version: 1
 policy:
   # fail | ignore: What happens when a changed code file matches no rule?
   unmatched_code: fail
+  # require_highest_priority: when multiple rules match one file, only the
+  # highest-priority non-fallback rule can satisfy freshness.
+  multiple_matches: require_highest_priority
+  # If true, fallback rules apply only when no non-fallback rule matches.
+  fallback_rules_allowed: true
   # If true, docs/archive/ documents cannot satisfy owner requirements.
   archive_docs_are_invalid_owners: true
   # If true, external URLs and notion-style references cannot satisfy owner requirements.
@@ -54,12 +59,23 @@ rules:
   # Each rule maps a set of code paths to their required docs.
   # - contract_docs: specs that define the implementation contract
   # - procedure_docs: runbooks for testing, building, deploying, etc.
+  # - priority: higher numbers win when rules overlap
+  # - fallback: broad catch-all rule used only when no specific rule matches
   #
-  # At least one contract_doc OR procedure_doc must change alongside
-  # a code change in the matched path. The handoff change is always
-  # required globally (see global_required_on_code_change above).
+  # Priority guide:
+  # - 100: exact file owner
+  # - 90: feature/module owner
+  # - 70: subsystem/package owner
+  # - 50: tooling/workflow owner
+  # - 30: broad project fallback
+  #
+  # At least one contract_doc OR procedure_doc from the selected owner rule
+  # must change alongside a code change in the matched path. The handoff change
+  # is always required globally (see global_required_on_code_change above).
 
   - id: project-core
+    priority: 30
+    fallback: true
     paths:
       - "{{SOURCE_DIR}}/**/*.py"
       - "app/**/*.py"
@@ -69,6 +85,7 @@ rules:
       - "docs/runbooks/test.md"
 
   - id: tooling
+    priority: 50
     paths:
       - "tools/**/*.py"
       - "scripts/**/*.py"
@@ -79,6 +96,8 @@ rules:
       - "docs/runbooks/finish-task.md"
 
   - id: tests
+    priority: 40
+    fallback: true
     paths:
       - "{{TEST_DIR}}/**/*.py"
     contract_docs:
@@ -87,12 +106,15 @@ rules:
       - "docs/runbooks/test.md"
 
   - id: workflow
+    priority: 100
     paths:
       - ".github/workflows/**/*.yml"
       - ".pre-commit-config.yaml"
       - "scripts/check_docs_freshness.py"
       - "scripts/finish_task.py"
+      - "tests/test_check_docs_freshness.py"
       - "tests/test_finish_task.py"
+      - "AGENTS.md"
     contract_docs:
       - "docs/WORKFLOW.md"
     procedure_docs:

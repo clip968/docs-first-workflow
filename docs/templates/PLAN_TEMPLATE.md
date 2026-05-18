@@ -16,6 +16,14 @@ Proposed | In Progress | Completed YYYY-MM-DD
 The small goal this plan will complete. It should correspond to one feature unit
 from the spec.
 
+## Work Mode
+
+Implementation | Spike
+
+Use Spike only for investigation that does not change production behavior.
+Spike output belongs in `docs/reports/` and must be converted back into a spec
+or implementation plan before code behavior changes.
+
 ## Non-goals
 
 - What this plan will NOT do
@@ -54,6 +62,18 @@ procedure doc.
 
 Do not use `docs/plans/` or handoff-only changes as substitutes for contract
 freshness.
+
+## Contract Review
+
+Use this section only when implementation changes satisfy an existing contract
+without changing spec or runbook text.
+
+- Related spec:
+- Contract changed: Yes / No
+- Reason:
+- Maintainer accepted exception: Yes / No
+- Required docs updated:
+  - `docs/handoff/CURRENT_HANDOFF.md`
 
 ## Red Test
 

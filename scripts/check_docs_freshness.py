@@ -61,15 +61,19 @@ DOCS_PREFIXES = (
     "docs/specs/",
     "docs/adrs/",
     "docs/plans/",
+    "docs/reports/",
     "docs/runbooks/",
     "docs/handoff/",
     "docs/templates/",
 )
 DOCS_EXACT = {
     "docs/DOC_OWNERS.yml",
+    "docs/INDEX.md",
+    "docs/MAP.md",
     "docs/WORKFLOW.md",
     "docs/README.md",
     "README.md",
+    "AGENTS.md",
     "CLAUDE.md",
     ".github/pull_request_template.md",
 }
@@ -80,6 +84,8 @@ HANDOFF_DOC = "docs/handoff/CURRENT_HANDOFF.md"
 class DocOwnerRule:
     id: str
     paths: list[str]
+    priority: int = 0
+    fallback: bool = False
     contract_docs: list[str] = field(default_factory=list)
     procedure_docs: list[str] = field(default_factory=list)
 
@@ -102,6 +108,7 @@ class DocOwnersConfig:
 class FreshnessResult:
     classification: dict[str, Any]
     unmatched_code_files: list[str]
+    ambiguous_rule_matches: dict[str, dict[str, Any]]
     missing_global_docs: list[str]
     missing_rule_docs: dict[str, dict[str, Any]]
     invalid_owner_docs: dict[str, list[str]]
@@ -113,6 +120,7 @@ class FreshnessResult:
             return False
         return bool(
             self.unmatched_code_files
+            or self.ambiguous_rule_matches
             or self.missing_global_docs
             or self.missing_rule_docs
             or self.invalid_owner_docs
@@ -248,6 +256,8 @@ def _legacy_to_config(data: dict[str, Any]) -> DocOwnersConfig:
             DocOwnerRule(
                 id=f"legacy:{normalize_path(str(code_path))}",
                 paths=[normalize_path(str(code_path))],
+                priority=0,
+                fallback=False,
                 contract_docs=owner_docs,
                 procedure_docs=[],
             )
@@ -291,6 +301,8 @@ def load_doc_owners_from_text(text: str) -> DocOwnersConfig:
             DocOwnerRule(
                 id=rule_id,
                 paths=unique_paths([str(path) for path in paths]),
+                priority=int(raw_rule.get("priority", 0) or 0),
+                fallback=bool(raw_rule.get("fallback", False)),
                 contract_docs=unique_paths([str(path) for path in contract_docs]),
                 procedure_docs=unique_paths([str(path) for path in procedure_docs]),
             )
@@ -470,6 +482,8 @@ def is_invalid_owner_doc(path: str, config: DocOwnersConfig) -> bool:
         "docs/archive/"
     ):
         return True
+    if normalized.startswith(("docs/plans/", "docs/reports/")):
+        return True
     # General: treat any external URL as invalid owner when external_index_is_invalid_owner is set.
     if config.policy.get("external_index_is_invalid_owner", True) and (
         lower.startswith(("http://", "https://")) or "notion" in lower
@@ -501,6 +515,23 @@ def matching_rules(path: str, config: DocOwnersConfig) -> list[DocOwnerRule]:
     ]
 
 
+def freshness_rules_for_path(path: str, config: DocOwnersConfig) -> list[DocOwnerRule]:
+    rules = matching_rules(path, config)
+    if config.policy.get("multiple_matches") != "require_highest_priority":
+        return rules
+
+    if config.policy.get("fallback_rules_allowed", False):
+        non_fallback_rules = [rule for rule in rules if not rule.fallback]
+        if non_fallback_rules:
+            rules = non_fallback_rules
+
+    if not rules:
+        return []
+
+    highest_priority = max(rule.priority for rule in rules)
+    return [rule for rule in rules if rule.priority == highest_priority]
+
+
 def evaluate_freshness(
     paths: list[str],
     config: DocOwnersConfig,
@@ -513,13 +544,24 @@ def evaluate_freshness(
     changed_docs = {normalize_path(path) for path in classification["docs_files"]}
     reviewed = {normalize_path(path) for path in (reviewed_docs or set())}
     unmatched_code_files: list[str] = []
+    ambiguous_rule_matches: dict[str, dict[str, Any]] = {}
     missing_rule_docs: dict[str, dict[str, Any]] = {}
 
     for code_file in classification["code_files"]:
-        rules = matching_rules(code_file, config)
+        rules = freshness_rules_for_path(code_file, config)
         if not rules:
             if config.policy.get("unmatched_code", "fail") == "fail":
                 unmatched_code_files.append(code_file)
+            continue
+
+        if (
+            config.policy.get("multiple_matches") == "require_highest_priority"
+            and len(rules) > 1
+        ):
+            ambiguous_rule_matches[code_file] = {
+                "priority": rules[0].priority,
+                "rules": [rule.id for rule in rules],
+            }
             continue
 
         if any(
@@ -550,6 +592,7 @@ def evaluate_freshness(
     return FreshnessResult(
         classification=classification,
         unmatched_code_files=unmatched_code_files,
+        ambiguous_rule_matches=ambiguous_rule_matches,
         missing_global_docs=missing_global_docs,
         missing_rule_docs=missing_rule_docs,
         invalid_owner_docs=invalid_owner_docs_by_rule(config),
@@ -686,6 +729,12 @@ def main(argv: list[str] | None = None) -> int:
             print("  reason: code files changed without a matching DOC_OWNERS rule")
             for code_file in result.unmatched_code_files:
                 print(f"    - {code_file}")
+        if result.ambiguous_rule_matches:
+            print("  reason: code files match multiple DOC_OWNERS rules with the same highest priority")
+            for code_file, detail in result.ambiguous_rule_matches.items():
+                print(f"  ambiguous owner rules for {code_file} (priority {detail['priority']}):")
+                for rule_id in detail["rules"]:
+                    print(f"    - {rule_id}")
         if result.missing_global_docs:
             print("  reason: code changed without required global docs update")
             for doc_path in result.missing_global_docs:
